@@ -66,7 +66,7 @@ export default function Home() {
         <a className="brand" href="#top" aria-label="PDFly home"><span className="brand-mark"><span /></span><span>PDFly</span></a>
         <div className="nav-links"><a href="#tools">Tools</a><a href="#ai">AI Workspace</a><a href="#security">Security</a><a href="#pricing">Pricing</a></div>
         <div className="nav-actions">
-          {loggedIn ? <Link className="dark-button" href="/dashboard">Dashboard <ArrowRight size={16} /></Link> : <><Link className="ghost-button" href="/login">Sign in</Link><Link className="dark-button" href="/signup">Get started <ArrowRight size={16} /></Link></>}
+          {loggedIn ? <><Link className="ghost-button" href="/tools">All tools</Link><Link className="dark-button" href="/dashboard">Dashboard <ArrowRight size={16} /></Link></> : <><Link className="ghost-button" href="/login">Sign in</Link><Link className="dark-button" href="/signup">Get started <ArrowRight size={16} /></Link></>}
           <button className="icon-button mobile-menu" aria-label="Open menu"><Menu size={20} /></button>
         </div>
       </nav>
@@ -85,8 +85,14 @@ export default function Home() {
         <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Fast processing</span><span><ShieldCheck size={14} /> Secure by design</span></div>
       </section>
 
+      <section className="tools-marquee" aria-label="PDFly tools">
+        <div className="tools-marquee-track">
+          {[...tools, ...tools].map(({ href, icon: Icon, title }, index) => <Link href={href} className="marquee-tool" key={`${title}-${index}`}><Icon size={17} /><span>{title}</span></Link>)}
+        </div>
+      </section>
+
       <section className="section container" id="tools">
-        <div className="section-heading"><div><span className="kicker">PDF tools</span><h2>Everything you need.<br />Nothing you don&apos;t.</h2></div><a href="#tools">All working tools <ArrowRight size={16} /></a></div>
+        <div className="section-heading"><div><span className="kicker">PDF tools</span><h2>Everything you need.<br />Nothing you don&apos;t.</h2></div><Link href="/tools">All tools <ArrowRight size={16} /></Link></div>
         <div className="tool-grid">{tools.map(({ href, icon: Icon, title, text }) => <Link className="tool-card" href={href} key={title}><span className="tool-icon"><Icon size={20} /></span><span><strong>{title}</strong><small>{text}</small></span><ArrowRight className="tool-arrow" size={17} /></Link>)}</div>
       </section>
 
@@ -94,6 +100,7 @@ export default function Home() {
       <section className="security-section container" id="security"><div className="security-card"><div className="security-icon"><ShieldCheck size={24} /></div><div><span className="kicker">Privacy first</span><h2>Your files are yours.</h2><p>PDFly is designed around temporary processing. We don&apos;t need to keep your documents just to help you work with them.</p></div><div className="security-stat"><strong>0</strong><span>default permanent<br />PDF storage</span></div></div></section>
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
+      <style jsx>{`.tools-marquee{overflow:hidden;border-top:1px solid #e8e9e4;border-bottom:1px solid #e8e9e4;background:#fff;padding:12px 0;margin:12px 0 0}.tools-marquee-track{display:flex;width:max-content;animation:pdfly-marquee 28s linear infinite}.marquee-tool{display:inline-flex;align-items:center;gap:9px;padding:10px 22px;margin-right:10px;border:1px solid #e8e9e4;border-radius:999px;color:#33352f;text-decoration:none;background:#fafbf8;font-size:13px;font-weight:700;white-space:nowrap}.marquee-tool:hover{background:#d8ff5f;border-color:#d8ff5f}@keyframes pdfly-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}@media(prefers-reduced-motion:reduce){.tools-marquee-track{animation:none}}`}</style>
     </main>
   );
 }
