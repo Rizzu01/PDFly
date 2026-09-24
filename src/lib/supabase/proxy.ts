@@ -35,13 +35,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const { data } = await supabase.auth.getClaims();
-
-  if (!data?.claims && request.nextUrl.pathname.startsWith('/dashboard')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+  // Refresh Supabase auth cookies when they are present. The dashboard itself
+  // uses the browser Supabase client, so middleware must not redirect based on
+  // server-side claims here (Google OAuth stores the browser session first).
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }
