@@ -16,9 +16,12 @@ export default function LoginPage() {
     setLoading(true);
     setMessage('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setMessage(error.message);
-    else window.location.href = '/dashboard';
-    setLoading(false);
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
+    window.location.href = '/';
   }
 
   async function handleGoogle() {
@@ -27,10 +30,8 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        queryParams: {
-          prompt: 'select_account',
-        },
+        redirectTo: `${window.location.origin}/auth/callback?next=/`,
+        queryParams: { prompt: 'select_account' },
       },
     });
     if (error) {
