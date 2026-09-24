@@ -23,8 +23,8 @@ type Output = { blob: Blob; name: string; previewUrl: string; kind: "pdf" | "ima
 
 const formatOptions = (file: File): Format[] => {
   const ext = file.name.split(".").pop()?.toLowerCase();
-  if (ext === "pdf") return ["jpg", "png", "webp"];
-  if (["jpg", "jpeg", "png", "webp"].includes(ext ?? "")) return ["pdf", "jpg", "png", "webp"];
+  if (ext === "pdf" || file.type === "application/pdf") return ["jpg", "png", "webp"];
+  if (["jpg", "jpeg", "png", "webp"].includes(ext ?? "") || file.type.startsWith("image/")) return ["pdf", "jpg", "png", "webp"];
   return [];
 };
 
