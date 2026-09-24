@@ -83,16 +83,16 @@ export default function Home() {
           <div className="tools-marquee-row row-one">
             {marqueeTools.map(({ href, icon: Icon, title, text }, index) => (
               <Link href={href} className="marquee-card" key={`one-${title}-${index}`}>
-                <span className="marquee-icon"><Icon size={17} /></span>
-                <span><strong>{title}</strong><small>{text}</small></span>
+                <span className="marquee-icon"><Icon size={18} /></span>
+                <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
               </Link>
             ))}
           </div>
           <div className="tools-marquee-row row-two">
             {[...marqueeTools].reverse().map(({ href, icon: Icon, title, text }, index) => (
               <Link href={href} className="marquee-card" key={`two-${title}-${index}`}>
-                <span className="marquee-icon"><Icon size={17} /></span>
-                <span><strong>{title}</strong><small>{text}</small></span>
+                <span className="marquee-icon"><Icon size={18} /></span>
+                <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
               </Link>
             ))}
           </div>
@@ -119,26 +119,25 @@ export default function Home() {
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
       <style jsx>{`
-        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:30px 0 34px;padding:2px 0 6px;background:#fff}
-        .tools-marquee-row{display:flex;width:max-content;gap:12px;margin:8px 0}
+        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:30px 0 34px;padding:4px 0 7px;background:#fff}
+        .tools-marquee-row{display:flex;width:max-content;gap:16px;margin:9px 0}
         .row-one{animation:pdfly-tools-left 36s linear infinite}
         .row-two{animation:pdfly-tools-right 40s linear infinite}
-        .marquee-card{width:230px;min-height:78px;display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid #e5e7e1;border-radius:15px;background:#fff;box-shadow:0 5px 16px rgba(17,18,15,.045);flex:0 0 auto;text-align:left;transition:.2s ease}
-        .marquee-card:hover{border-color:#cfd3c7;box-shadow:0 10px 25px rgba(17,18,15,.08);transform:translateY(-2px)}
-        .marquee-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#d8ff5f,#d6f0a4);color:#20221d}
+        .marquee-card{width:250px;min-height:82px;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:15px;align-items:center;padding:14px 17px;border:1px solid #e4e6df;border-radius:16px;background:#fff;box-shadow:0 5px 18px rgba(17,18,15,.045);flex:0 0 auto;text-align:left;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+        .marquee-card:hover{border-color:#cbd0c2;box-shadow:0 12px 28px rgba(17,18,15,.08);transform:translateY(-2px)}
+        .marquee-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#d8ff5f,#d6f0a4);color:#20221d}
         .marquee-card:nth-child(3n) .marquee-icon{background:linear-gradient(135deg,#e2c9ff,#ffb7df)}
         .marquee-card:nth-child(4n) .marquee-icon{background:linear-gradient(135deg,#a9e9ff,#c8ffb8)}
-        .marquee-card span:last-child{min-width:0}
-        .marquee-card strong,.marquee-card small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-card strong{font-size:13px;margin-bottom:4px;color:#20221d}
-        .marquee-card small{font-size:10px;color:#7b7e77}
-        .marquee-fade{position:absolute;top:0;bottom:0;width:150px;z-index:5;pointer-events:none}
-        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.96) 24%,rgba(255,255,255,0) 100%)}
-        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.96) 24%,rgba(255,255,255,0) 100%)}
+        .marquee-content{min-width:0;display:grid;grid-template-rows:auto auto;row-gap:5px;align-content:center}
+        .marquee-card strong{display:block;font-size:13px;line-height:1.15;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .marquee-card small{display:block;font-size:10.5px;line-height:1.35;color:#777b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .marquee-fade{position:absolute;top:0;bottom:0;width:170px;z-index:5;pointer-events:none}
+        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 25%,rgba(255,255,255,.72) 48%,rgba(255,255,255,0) 100%)}
+        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.98) 25%,rgba(255,255,255,.72) 48%,rgba(255,255,255,0) 100%)}
         @keyframes pdfly-tools-left{from{transform:translateX(0)}to{transform:translateX(-33.333333%)}}
         @keyframes pdfly-tools-right{from{transform:translateX(-33.333333%)}to{transform:translateX(0)}}
         @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.marquee-fade{display:none}.tools-marquee{overflow-x:auto}.marquee-card{scroll-snap-align:start}}
-        @media(max-width:850px){.tools-marquee{margin:24px 0 28px}.marquee-card{width:195px;min-height:70px;padding:11px 12px}.marquee-icon{width:35px;height:35px;flex-basis:35px}.marquee-card small{font-size:9px}.marquee-fade{width:75px}}
+        @media(max-width:850px){.tools-marquee{margin:24px 0 28px}.tools-marquee-row{gap:12px}.marquee-card{width:220px;min-height:76px;grid-template-columns:38px minmax(0,1fr);column-gap:12px;padding:12px 14px}.marquee-icon{width:38px;height:38px;border-radius:11px}.marquee-card small{font-size:9.5px}.marquee-fade{width:85px}}
       `}</style>
     </main>
   );
