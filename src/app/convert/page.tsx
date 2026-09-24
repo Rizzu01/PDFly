@@ -3,10 +3,10 @@
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Download, FileImage, FileText, Image as ImageIcon, Lock, ShieldCheck, Upload, X, Zap } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
+import { convertPdfToJpg as convertPdfToJpgOnServer, downloadBlob } from "@/lib/processing-api";
 import styles from "./convert.module.css";
 
 type OutputMode = "pdf-to-jpg" | "jpg-to-pdf";
-
 type ImageFile = File & { previewUrl?: string };
 
 export default function ConvertPage() {
@@ -19,7 +19,6 @@ export default function ConvertPage() {
 
   const accept = mode === "pdf-to-jpg" ? "application/pdf" : "image/jpeg,image/png,image/webp";
   const hasFiles = mode === "pdf-to-jpg" ? Boolean(pdfFile) : images.length > 0;
-
   const previews = useMemo(() => images.map((file) => ({ file, url: URL.createObjectURL(file) })), [images]);
 
   const reset = () => {
@@ -46,39 +45,6 @@ export default function ConvertPage() {
     }
   };
 
-  const downloadBlob = (blob: Blob, name: string) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const convertPdfToJpg = async () => {
-    if (!pdfFile) return;
-    const source = await PDFDocument.load(await pdfFile.arrayBuffer(), { ignoreEncryption: false });
-    const pages = source.getPages();
-    if (!pages.length) throw new Error("This PDF has no pages.");
-
-    // pdf-lib does not render PDF pages. Create a high-quality printable page snapshot
-    // through the browser's PDF renderer, then capture it from an offscreen canvas.
-    const pdfUrl = URL.createObjectURL(pdfFile);
-    const iframe = document.createElement("iframe");
-    iframe.src = `${pdfUrl}#page=1&zoom=100`;
-    iframe.style.position = "fixed";
-    iframe.style.width = "1200px";
-    iframe.style.height = "1600px";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-    iframe.setAttribute("aria-hidden", "true");
-    document.body.appendChild(iframe);
-    await new Promise<void>((resolve) => { iframe.onload = () => resolve(); setTimeout(resolve, 900); });
-    document.body.removeChild(iframe);
-    URL.revokeObjectURL(pdfUrl);
-    throw new Error("Your browser does not expose PDF page pixels for direct JPG export. JPG conversion needs the PDF rendering engine, which PDFly will add in the processing worker.");
-  };
-
   const convertImagesToPdf = async () => {
     const output = await PDFDocument.create();
     for (const image of images) {
@@ -99,8 +65,12 @@ export default function ConvertPage() {
     if (!hasFiles || busy) return;
     setBusy(true); setError("");
     try {
-      if (mode === "jpg-to-pdf") await convertImagesToPdf();
-      else await convertPdfToJpg();
+      if (mode === "jpg-to-pdf") {
+        await convertImagesToPdf();
+      } else if (pdfFile) {
+        const blob = await convertPdfToJpgOnServer(pdfFile);
+        downloadBlob(blob, "PDFly-pages.zip");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Conversion failed. Please try another file.");
     } finally { setBusy(false); }
@@ -116,7 +86,7 @@ export default function ConvertPage() {
       <section className="hero container tool-page-hero">
         <div className="eyebrow"><FileImage size={15} /> PDF converter</div>
         <h1>PDF ↔ images,<br /><span>made simple.</span></h1>
-        <p className="hero-copy">Turn JPG and PNG images into a clean PDF, or prepare PDFs for image export. Lightweight conversions stay in your browser.</p>
+        <p className="hero-copy">Turn JPG and PNG images into a clean PDF, or export every PDF page as JPG. Heavy conversion is processed temporarily by PDFly.</p>
 
         <div className={styles.modeSwitch} role="tablist" aria-label="Conversion type">
           <button className={mode === "pdf-to-jpg" ? styles.active : ""} onClick={() => { setMode("pdf-to-jpg"); reset(); }}><FileText size={16} /> PDF to JPG</button>
@@ -128,8 +98,8 @@ export default function ConvertPage() {
             <input ref={inputRef} hidden type="file" accept={accept} multiple={mode === "jpg-to-pdf"} onChange={(e) => e.target.files && loadFiles(e.target.files)} />
             <div className="upload-icon"><Upload size={22} /></div>
             <h2>{mode === "pdf-to-jpg" ? "Drop your PDF here" : "Drop your images here"}</h2>
-            <p>{mode === "pdf-to-jpg" ? "One PDF · image export foundation" : "JPG or PNG · multiple files supported"}</p>
-            <span className="file-note">Private by default · No upload · No permanent storage</span>
+            <p>{mode === "pdf-to-jpg" ? "PDF pages will be exported as JPG files" : "JPG or PNG · multiple files supported"}</p>
+            <span className="file-note">Private by default · Temporary processing only</span>
           </div>
         ) : (
           <div className={styles.workspace}>
@@ -141,11 +111,12 @@ export default function ConvertPage() {
               <button className="icon-button" onClick={reset} aria-label="Remove files"><X size={18} /></button>
             </div>
             {mode === "jpg-to-pdf" && <div className={styles.previewGrid}>{previews.map(({ file, url }, index) => <div className={styles.preview} key={`${file.name}-${index}`}><img src={url} alt="" /><span>{index + 1}</span></div>)}</div>}
-            <div className={styles.actionRow}><button className="dark-button large" onClick={convert} disabled={busy}>{busy ? "Preparing…" : mode === "pdf-to-jpg" ? "Convert to JPG" : "Create PDF"}</button><button className="ghost-button" onClick={reset}>Start over</button></div>
+            <div className={styles.actionRow}><button className="dark-button large" onClick={convert} disabled={busy}>{busy ? "Processing…" : mode === "pdf-to-jpg" ? "Convert to JPG" : "Create PDF"}</button><button className="ghost-button" onClick={reset}>Start over</button></div>
+            {mode === "pdf-to-jpg" && <p className="compression-note">PDF → JPG uses 1 processing job from your daily allowance. JPG/PNG → PDF stays browser-side.</p>}
           </div>
         )}
         {error && <p role="alert" className="error-message">{error}</p>}
-        <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Browser processing</span><span><ShieldCheck size={14} /> Secure by design</span></div>
+        <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Temporary processing</span><span><ShieldCheck size={14} /> Secure by design</span></div>
       </section>
     </main>
   );
