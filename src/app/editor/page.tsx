@@ -1,20 +1,61 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ArrowLeft, Download, FileText, Lock, ShieldCheck, Type, Upload, X, Zap } from "lucide-react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Download, FileText, Lock, ShieldCheck, Type, Upload, X, Zap } from "lucide-react";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import styles from "./editor.module.css";
 
-type TextItem = { id: number; text: string; x: number; y: number };
+type TextItem = { id: number; page: number; text: string; x: number; y: number };
+
+type RenderState = { width: number; height: number };
 
 export default function EditorPage() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pageWrapRef = useRef<HTMLDivElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [renderState, setRenderState] = useState<RenderState | null>(null);
   const [textItems, setTextItems] = useState<TextItem[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rendering, setRendering] = useState(false);
   const [error, setError] = useState("");
+
+  const renderPage = async () => {
+    if (!pdfBytes || !canvasRef.current || !pageNumber) return;
+    setRendering(true);
+    try {
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      const pdf = await pdfjs.getDocument({ data: new Uint8Array(pdfBytes), disableWorker: true }).promise;
+      const page = await pdf.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const maxWidth = Math.min(720, Math.max(320, (pageWrapRef.current?.clientWidth || 720) - 2));
+      const scale = maxWidth / baseViewport.width;
+      const viewport = page.getViewport({ scale });
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Your browser could not create a PDF rendering surface.");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      canvas.style.width = `${Math.ceil(viewport.width)}px`;
+      canvas.style.height = `${Math.ceil(viewport.height)}px`;
+      await page.render({ canvasContext: context, viewport }).promise;
+      setRenderState({ width: viewport.width, height: viewport.height });
+      await pdf.destroy();
+    } catch (renderError) {
+      console.error(renderError);
+      setError("This page could not be rendered. Try another PDF.");
+    } finally {
+      setRendering(false);
+    }
+  };
+
+  useEffect(() => {
+    void renderPage();
+  }, [pdfBytes, pageNumber]);
 
   const loadFile = async (candidate?: File) => {
     setError("");
@@ -23,9 +64,12 @@ export default function EditorPage() {
       return;
     }
     try {
-      await PDFDocument.load(await candidate.arrayBuffer());
+      const bytes = await candidate.arrayBuffer();
+      const pdf = await PDFDocument.load(bytes);
       setFile(candidate);
-      setPdfBytes(await candidate.arrayBuffer());
+      setPdfBytes(bytes);
+      setPageCount(pdf.getPageCount());
+      setPageNumber(1);
       setTextItems([]);
       setSelected(null);
     } catch {
@@ -35,7 +79,7 @@ export default function EditorPage() {
 
   const addText = () => {
     const id = Date.now();
-    setTextItems((items) => [...items, { id, text: "Double-click to edit", x: 16, y: 20 }]);
+    setTextItems((items) => [...items, { id, page: pageNumber, text: "Double-click to edit", x: 12, y: 18 }]);
     setSelected(id);
   };
 
@@ -47,6 +91,14 @@ export default function EditorPage() {
     setSelected(null);
   };
 
+  const moveText = (id: number, event: React.PointerEvent<HTMLDivElement>) => {
+    if (!pageWrapRef.current) return;
+    const rect = pageWrapRef.current.getBoundingClientRect();
+    const x = Math.max(2, Math.min(82, ((event.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(2, Math.min(94, ((event.clientY - rect.top) / rect.height) * 100));
+    setTextItems((items) => items.map((item) => item.id === id ? { ...item, x, y } : item));
+  };
+
   const exportPdf = async () => {
     if (!pdfBytes || !file || busy) return;
     setBusy(true);
@@ -55,25 +107,25 @@ export default function EditorPage() {
       const pdf = await PDFDocument.load(pdfBytes);
       const pages = pdf.getPages();
       const font = await pdf.embedFont(StandardFonts.Helvetica);
-      const first = pages[0];
-      if (!first) throw new Error("The PDF has no pages.");
-
       textItems.forEach((item) => {
-        first.drawText(item.text, {
-          x: Math.max(12, Math.min(first.getWidth() - 220, item.x * first.getWidth() / 100)),
-          y: Math.max(20, first.getHeight() - (item.y * first.getHeight() / 100)),
+        const page = pages[item.page - 1];
+        if (!page || !item.text.trim()) return;
+        page.drawText(item.text.trim(), {
+          x: Math.max(12, Math.min(page.getWidth() - 220, item.x * page.getWidth() / 100)),
+          y: Math.max(20, page.getHeight() - (item.y * page.getHeight() / 100)),
           size: 14,
           font,
           color: rgb(0.07, 0.08, 0.06),
         });
       });
-
       const bytes = await pdf.save({ useObjectStreams: true });
       const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
       const link = document.createElement("a");
       link.href = url;
       link.download = `PDFly-${file.name.replace(/\.pdf$/i, "")}-edited.pdf`;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not export the edited PDF.");
@@ -85,11 +137,16 @@ export default function EditorPage() {
   const reset = () => {
     setFile(null);
     setPdfBytes(null);
+    setPageCount(0);
+    setPageNumber(1);
+    setRenderState(null);
     setTextItems([]);
     setSelected(null);
     setError("");
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  const currentItems = textItems.filter((item) => item.page === pageNumber);
 
   return (
     <main className={styles.shell}>
@@ -99,51 +156,53 @@ export default function EditorPage() {
       </nav>
 
       <section className="hero container tool-page-hero">
-        <div className="eyebrow"><Type size={15} /> PDF editor</div>
-        <h1>Edit your PDF,<br /><span>without the upload.</span></h1>
-        <p className="hero-copy">Add text directly to a PDF in your browser. Your original file stays on your device.</p>
+        <div className="eyebrow"><Type size={15} /> PDF editor v2</div>
+        <h1>Edit your PDF,<br /><span>page by page.</span></h1>
+        <p className="hero-copy">See the real PDF, move text where you need it, and export the edited document — entirely in your browser.</p>
 
         {!file ? (
           <div className="dropzone" onClick={() => inputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); }} role="button" tabIndex={0}>
-            <input ref={inputRef} hidden type="file" accept="application/pdf" onChange={(e) => loadFile(e.target.files?.[0])} />
+            <input ref={inputRef} hidden type="file" accept="application/pdf" onChange={(e: ChangeEvent<HTMLInputElement>) => loadFile(e.target.files?.[0])} />
             <div className="upload-icon"><Upload size={22} /></div>
             <h2>Drop your PDF here</h2>
-            <p>One PDF · browser-first editing</p>
+            <p>Multi-page · rendered preview · browser-first editing</p>
             <span className="file-note">Private by default · No upload · No permanent storage</span>
           </div>
         ) : (
           <div className={styles.workspace}>
             <aside className={styles.toolbar}>
-              <div className={styles.fileInfo}><FileText size={18} /><div><strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(2)} MB</span></div></div>
-              <button className={styles.toolButton} onClick={addText}><Type size={17} /> Add text</button>
-              <div className={styles.tip}>Text is added to the first page. Full page-aware editing is coming with the PDFly processing engine.</div>
+              <div className={styles.fileInfo}><FileText size={18} /><div><strong>{file.name}</strong><span>{(file.size / 1024 / 1024).toFixed(2)} MB · {pageCount} pages</span></div></div>
+              <button className={styles.toolButton} onClick={addText} disabled={rendering}><Type size={17} /> Add text</button>
+              <div className={styles.tip}>Text is attached to the current page. Drag a selected text box to reposition it.</div>
+              <div className={styles.pageNav}>
+                <button onClick={() => setPageNumber((page) => Math.max(1, page - 1))} disabled={pageNumber <= 1 || rendering} aria-label="Previous page"><ChevronLeft size={17} /></button>
+                <span>Page <strong>{pageNumber}</strong> / {pageCount}</span>
+                <button onClick={() => setPageNumber((page) => Math.min(pageCount, page + 1))} disabled={pageNumber >= pageCount || rendering} aria-label="Next page"><ChevronRight size={17} /></button>
+              </div>
               <button className={styles.clearButton} onClick={reset}><X size={16} /> Start over</button>
             </aside>
 
-            <div className={styles.canvasArea}>
-              <div className={styles.pageMock}>
-                <div className={styles.pageLabel}>PDF preview · page 1</div>
-                {textItems.map((item) => (
+            <div className={styles.canvasArea} ref={pageWrapRef}>
+              <div className={styles.pageMock} style={renderState ? { width: renderState.width, height: renderState.height } : undefined}>
+                <canvas ref={canvasRef} className={styles.pdfCanvas} aria-label={`PDF page ${pageNumber}`} />
+                {rendering && <div className={styles.renderOverlay}>Rendering page…</div>}
+                {currentItems.map((item) => (
                   <div
                     key={item.id}
                     className={`${styles.textLayer} ${selected === item.id ? styles.selected : ""}`}
                     style={{ left: `${item.x}%`, top: `${item.y}%` }}
-                    onClick={(e) => { e.stopPropagation(); setSelected(item.id); }}
+                    onPointerDown={(event) => { event.stopPropagation(); setSelected(item.id); }}
+                    onDoubleClick={(event) => event.stopPropagation()}
                   >
-                    <input
-                      value={item.text}
-                      onChange={(e) => updateText(item.id, e.target.value)}
-                      aria-label="PDF text"
-                    />
+                    <input value={item.text} onChange={(event) => updateText(item.id, event.target.value)} aria-label="PDF text" />
                     {selected === item.id && <button onClick={() => removeText(item.id)} aria-label="Delete text"><X size={13} /></button>}
                   </div>
                 ))}
-                {!textItems.length && <div className={styles.emptyPage}><FileText size={32} /><span>PDF page ready</span><small>Use “Add text” to place editable text.</small></div>}
               </div>
             </div>
 
             <div className={styles.actionBar}>
-              <div><strong>{textItems.length}</strong> text element{textItems.length === 1 ? "" : "s"}</div>
+              <div><strong>{textItems.length}</strong> text element{textItems.length === 1 ? "" : "s"} · {currentItems.length} on this page</div>
               <button className="dark-button large" onClick={exportPdf} disabled={busy}>{busy ? "Exporting…" : <><Download size={17} /> Download edited PDF</>}</button>
             </div>
           </div>
