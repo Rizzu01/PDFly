@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, FileDown, FileText, Lock, ShieldCheck, Upload, X, Zap } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
+import { compressOnServer, downloadBlob } from "@/lib/processing-api";
 
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
@@ -24,13 +25,9 @@ export default function CompressPdfPage() {
     if (incoming.type !== "application/pdf") { setError("Please choose a PDF file only."); return; }
     try {
       const pdf = await PDFDocument.load(await incoming.arrayBuffer());
-      setFile(incoming);
-      setPages(pdf.getPageCount());
-      setResult(null);
-      setError("");
+      setFile(incoming); setPages(pdf.getPageCount()); setResult(null); setError("");
     } catch (err) {
-      console.error(err);
-      setError("This PDF could not be opened. Please choose a valid PDF.");
+      console.error(err); setError("This PDF could not be opened. Please choose a valid PDF.");
     }
   }, []);
 
@@ -38,32 +35,34 @@ export default function CompressPdfPage() {
     if (!file) return;
     try {
       setProcessing(true); setError(""); setResult(null);
-      const source = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: false });
 
-      if (level !== "light") {
-        source.setTitle("");
-        source.setAuthor("");
-        source.setSubject("");
-        source.setKeywords([]);
-        source.setCreator("PDFly");
-        source.setProducer("PDFly");
+      if (level === "strong") {
+        const blob = await compressOnServer(file, "strong");
+        const bytes = await blob.arrayBuffer();
+        const size = bytes.byteLength;
+        const saved = Math.max(0, ((file.size - size) / file.size) * 100);
+        setResult({ size, saved });
+        downloadBlob(blob, "PDFly-compressed.pdf");
+        return;
+      }
+
+      const source = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: false });
+      source.setCreator("PDFly");
+      source.setProducer("PDFly");
+      if (level === "balanced") {
+        source.setTitle(""); source.setAuthor(""); source.setSubject(""); source.setKeywords([]);
       }
 
       const bytes = await source.save({
         useObjectStreams: true,
-        objectsPerTick: level === "strong" ? 20 : level === "balanced" ? 50 : 100,
+        objectsPerTick: level === "balanced" ? 50 : 100,
       });
-
       const saved = Math.max(0, ((file.size - bytes.length) / file.size) * 100);
       setResult({ size: bytes.length, saved });
-
-      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-      const link = document.createElement("a");
-      link.href = url; link.download = "PDFly-compressed.pdf";
-      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+      downloadBlob(new Blob([bytes], { type: "application/pdf" }), "PDFly-compressed.pdf");
     } catch (err) {
       console.error(err);
-      setError("We couldn't optimize this PDF. Please try again.");
+      setError(err instanceof Error ? err.message : "We couldn't optimize this PDF. Please try again.");
     } finally { setProcessing(false); }
   };
 
@@ -77,14 +76,14 @@ export default function CompressPdfPage() {
       <section className="hero container tool-page-hero">
         <div className="eyebrow"><FileDown size={15} /> PDF compressor</div>
         <h1>Smaller PDFs,<br /><span>without the hassle.</span></h1>
-        <p className="hero-copy">Optimize your PDF directly in your browser. No upload, no account, no permanent storage.</p>
+        <p className="hero-copy">Light and balanced optimization run in your browser. Strong optimization uses PDFly's temporary processing engine for deeper compression.</p>
 
         {!file ? (
           <div className="dropzone" onClick={() => inputRef.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void loadFile(event.dataTransfer.files[0] ?? null); }} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}>
             <input ref={inputRef} type="file" accept="application/pdf" hidden onChange={(event) => void loadFile(event.target.files?.[0] ?? null)} />
             <div className="upload-icon"><Upload size={22} /></div>
             <h2>Drop your PDF here</h2><p>or click to browse from your device</p>
-            <span className="file-note">Private by default · Browser processing · No upload</span>
+            <span className="file-note">Private by default · Strong mode uses temporary processing</span>
           </div>
         ) : (
           <div className="split-workspace">
@@ -96,13 +95,13 @@ export default function CompressPdfPage() {
             <div className="compress-options">
               <div>
                 <span className="option-label">Optimization level</span>
-                <p>PDFly rewrites the document structure for a smaller file.</p>
+                <p>Choose browser speed or deeper server-side compression.</p>
               </div>
               <div className="level-grid">
                 {([
-                  ["light", "Light", "Fastest optimization"],
-                  ["balanced", "Balanced", "Recommended"],
-                  ["strong", "Strong", "Maximum optimization"],
+                  ["light", "Light", "Browser · fastest"],
+                  ["balanced", "Balanced", "Browser · recommended"],
+                  ["strong", "Strong", "Server · deeper compression"],
                 ] as const).map(([value, title, description]) => (
                   <button key={value} className={`level-card ${level === value ? "active" : ""}`} onClick={() => setLevel(value)}>
                     <span className="level-check">{level === value && <Check size={12} />}</span>
@@ -124,12 +123,12 @@ export default function CompressPdfPage() {
             <button className="dark-button large split-action" onClick={() => void compress()} disabled={processing}>
               {processing ? "Optimizing PDF…" : result ? "Optimize again" : "Compress PDF"} <ArrowRight size={17} />
             </button>
-            <p className="compression-note">Best-effort browser optimization. Image-heavy PDFs may need server-side compression for deeper size reduction.</p>
+            <p className="compression-note">Strong mode uses 1 processing job from your daily allowance. Uploaded files are processed temporarily and not stored permanently.</p>
           </div>
         )}
 
         {error && <p role="alert" className="error-message">{error}</p>}
-        <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Browser processing</span><span><ShieldCheck size={14} /> Secure by design</span></div>
+        <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Browser-first</span><span><ShieldCheck size={14} /> Secure by design</span></div>
       </section>
     </main>
   );
