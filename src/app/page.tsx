@@ -18,7 +18,7 @@ const tools = [
   { href: "/viewer", icon: Eye, title: "PDF Viewer", text: "Read and inspect PDFs." },
 ];
 
-type Output = { blob: Blob; name: string; previewUrl: string; kind: "pdf" | "image" };
+type Output = { blob: Blob; name: string; previewUrl: string; kind: "pdf" | "image" | "zip" };
 type Format = "pdf" | "jpg" | "png";
 
 const formatOptions = (file: File): Format[] => {
@@ -64,6 +64,19 @@ export default function Home() {
     setTarget(options[0] ?? "");
   }, []);
 
+  const renderPdfPreview = async (file: File, imageType: "image/jpeg" | "image/png") => {
+    const { pdfjsLib } = await import("pdfjs-dist");
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Preview unavailable");
+    await page.render({ canvas, canvasContext: context, viewport }).promise;
+    return new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Preview generation failed")), imageType));
+  };
+
   const makePdfFromImages = async (images: File[]) => {
     const pdf = await PDFDocument.create();
     for (const file of images) {
@@ -81,36 +94,30 @@ export default function Home() {
       setProcessing(true); setError(""); resetOutput();
       const source = files[0];
       let blob: Blob;
+      let previewBlob: Blob;
       let name: string;
       let kind: Output["kind"];
 
       if (source.type === "application/pdf" && target === "jpg") {
         blob = await convertPdfToJpg(source);
+        previewBlob = await renderPdfPreview(source, "image/jpeg");
         name = "PDFly-pages.zip";
-        kind = "image";
+        kind = "zip";
       } else if (source.type === "application/pdf" && target === "png") {
-        const { pdfjsLib } = await import("pdfjs-dist");
-        const pdf = await pdfjsLib.getDocument({ data: await source.arrayBuffer() }).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.6 });
-        const canvas = document.createElement("canvas");
-        canvas.width = viewport.width; canvas.height = viewport.height;
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("Canvas unavailable");
-        await page.render({ canvas, canvasContext: context, viewport }).promise;
-        blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("PNG conversion failed")), "image/png"));
+        blob = await renderPdfPreview(source, "image/png");
+        previewBlob = blob;
         name = "PDFly-page-1.png";
         kind = "image";
       } else if (target === "pdf") {
         blob = await makePdfFromImages(files);
+        previewBlob = blob;
         name = "PDFly-converted.pdf";
         kind = "pdf";
       } else {
         throw new Error("This format is not supported yet.");
       }
 
-      const previewUrl = URL.createObjectURL(blob);
-      setOutput({ blob, name, previewUrl, kind });
+      setOutput({ blob, name, previewUrl: URL.createObjectURL(previewBlob), kind });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Conversion failed. Please try another file.");
@@ -119,9 +126,10 @@ export default function Home() {
 
   const download = () => {
     if (!output) return;
+    const url = URL.createObjectURL(output.blob);
     const link = document.createElement("a");
-    link.href = output.previewUrl; link.download = output.name;
-    document.body.appendChild(link); link.click(); link.remove();
+    link.href = url; link.download = output.name;
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
   };
 
   const startOver = () => {
@@ -158,7 +166,7 @@ export default function Home() {
 
           {output && <div className="converter-result" onClick={(event) => event.stopPropagation()}>
             <div className="result-head"><div><span className="success-badge"><Check size={13} /> Conversion complete</span><h3>{output.name}</h3><p>Your converted file is ready.</p></div><button className="remove-file" onClick={startOver} aria-label="Convert another"><RefreshCw size={17} /></button></div>
-            <div className="result-preview">{output.kind === "pdf" ? <iframe title="Converted PDF preview" src={output.previewUrl} /> : <div className="image-preview"><img src={output.previewUrl} alt="Converted preview" /></div>}</div>
+            <div className="result-preview">{output.kind === "pdf" ? <iframe title="Converted PDF preview" src={output.previewUrl} /> : <div className="image-preview"><img src={output.previewUrl} alt="Converted preview" />{output.kind === "zip" && <span className="preview-note">Preview of page 1 · Download contains all converted JPG pages.</span>}</div>}</div>
             <div className="result-actions"><button className="dark-button" onClick={download}><Download size={17} /> Download</button><button className="ghost-button" onClick={startOver}>Convert another</button><a className="ghost-button" href={output.previewUrl} target="_blank" rel="noreferrer"><Eye size={16} /> Open preview</a></div>
           </div>}
         </div>
@@ -176,16 +184,7 @@ export default function Home() {
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
       <style jsx>{`
-        .hero-title-compact{font-size:clamp(42px,5.2vw,68px);line-height:.98;letter-spacing:-.055em;margin:18px auto 30px;max-width:900px}
-        .hero-title-compact span{white-space:nowrap}
-        .dropzone.has-output{cursor:default}
-        .converter-panel,.converter-result{width:100%;max-width:760px;margin:0 auto;text-align:left}
-        .selected-file,.result-head{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid #e8e9e4;background:#fff;border-radius:18px}
-        .selected-file>div:nth-child(2),.result-head>div{min-width:0;flex:1}.selected-file strong,.result-head h3{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.selected-file span,.result-head p{display:block;color:#6d706a;font-size:13px;margin-top:4px}
-        .remove-file{border:0;background:#f6f7f3;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:#555}
-        .convert-controls{display:flex;align-items:end;gap:12px;margin-top:14px}.convert-controls>div{flex:1}.convert-controls label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}.convert-controls select{width:100%;height:48px;border:1px solid #dfe1da;border-radius:13px;padding:0 14px;background:#fff;font:inherit}.convert-button{height:48px;min-width:150px;justify-content:center}.converter-panel>.file-note{display:block;margin-top:14px}
-        .success-badge{display:inline-flex;align-items:center;gap:5px;background:#efffd0;color:#4b5d16;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}.result-head h3{margin:9px 0 0;font-size:18px}.result-preview{margin-top:14px;border:1px solid #e8e9e4;border-radius:18px;overflow:hidden;background:#f6f7f3;min-height:260px;display:grid;place-items:center}.result-preview iframe{width:100%;height:430px;border:0}.image-preview{padding:18px;max-height:430px;overflow:auto}.image-preview img{display:block;max-width:100%;max-height:390px;margin:auto;object-fit:contain}.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.result-actions .ghost-button{display:inline-flex;align-items:center;gap:7px}.result-actions .dark-button{display:inline-flex;align-items:center;gap:7px}
-        @media(max-width:700px){.hero-title-compact{font-size:42px;line-height:1.02;margin:16px auto 24px}.hero-title-compact span{white-space:normal}.convert-controls{align-items:stretch;flex-direction:column}.convert-button{width:100%}.result-actions>*{width:100%;justify-content:center}.result-preview iframe{height:360px}}
+        .hero-title-compact{font-size:clamp(42px,5.2vw,68px);line-height:.98;letter-spacing:-.055em;margin:18px auto 30px;max-width:900px}.hero-title-compact span{white-space:nowrap}.dropzone.has-output{cursor:default}.converter-panel,.converter-result{width:100%;max-width:760px;margin:0 auto;text-align:left}.selected-file,.result-head{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid #e8e9e4;background:#fff;border-radius:18px}.selected-file>div:nth-child(2),.result-head>div{min-width:0;flex:1}.selected-file strong,.result-head h3{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.selected-file span,.result-head p{display:block;color:#6d706a;font-size:13px;margin-top:4px}.remove-file{border:0;background:#f6f7f3;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;color:#555}.convert-controls{display:flex;align-items:end;gap:12px;margin-top:14px}.convert-controls>div{flex:1}.convert-controls label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}.convert-controls select{width:100%;height:48px;border:1px solid #dfe1da;border-radius:13px;padding:0 14px;background:#fff;font:inherit}.convert-button{height:48px;min-width:150px;justify-content:center}.converter-panel>.file-note{display:block;margin-top:14px}.success-badge{display:inline-flex;align-items:center;gap:5px;background:#efffd0;color:#4b5d16;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}.result-head h3{margin:9px 0 0;font-size:18px}.result-preview{margin-top:14px;border:1px solid #e8e9e4;border-radius:18px;overflow:hidden;background:#f6f7f3;min-height:260px;display:grid;place-items:center}.result-preview iframe{width:100%;height:430px;border:0}.image-preview{padding:18px;max-height:430px;overflow:auto}.image-preview img{display:block;max-width:100%;max-height:390px;margin:auto;object-fit:contain}.preview-note{display:block;text-align:center;font-size:12px;color:#6d706a;margin-top:10px}.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.result-actions .ghost-button,.result-actions .dark-button{display:inline-flex;align-items:center;gap:7px}@media(max-width:700px){.hero-title-compact{font-size:42px;line-height:1.02;margin:16px auto 24px}.hero-title-compact span{white-space:normal}.convert-controls{align-items:stretch;flex-direction:column}.convert-button{width:100%}.result-actions>*{width:100%;justify-content:center}.result-preview iframe{height:360px}}
       `}</style>
     </main>
   );
