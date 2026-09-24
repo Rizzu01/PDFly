@@ -1,0 +1,36 @@
+.shell { min-height:100vh; background:#f7f8f4; color:var(--ink); }
+.viewerPage { width:min(1220px,calc(100% - 32px)); margin:28px auto 45px; }
+.workspace { overflow:hidden; border:1px solid var(--line); border-radius:22px; background:#fff; box-shadow:0 24px 70px rgba(21,23,18,.09); }
+.header { min-height:68px; padding:10px 14px 10px 18px; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid var(--line); }
+.fileInfo { min-width:0; display:flex; align-items:center; gap:11px; }
+.fileInfo > div { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.fileInfo strong { max-width:520px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.fileInfo span:not(.fileIcon) { color:#8a8e85; font-size:10px; }
+.fileIcon { width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:var(--soft); color:#666a61; }
+.headerActions { display:flex; align-items:center; gap:5px; }
+.headerActions .ghost-button { font-size:12px; }
+.toolbar { min-height:58px; padding:8px 14px; display:flex; align-items:center; justify-content:center; position:relative; border-bottom:1px solid var(--line); background:#fbfcf9; }
+.pageControls,.zoomControls { display:flex; align-items:center; gap:5px; }
+.zoomControls { position:absolute; right:14px; }
+.control { width:31px; height:31px; display:grid; place-items:center; border:1px solid var(--line); border-radius:8px; background:#fff; color:#4e524a; cursor:pointer; }
+.control:hover:not(:disabled) { border-color:#c3c7bd; background:var(--soft); }
+.control:disabled { opacity:.35; cursor:not-allowed; }
+.pageInput { height:31px; display:flex; align-items:center; gap:7px; padding:0 9px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.pageInput input { width:28px; border:0; outline:0; background:transparent; text-align:right; color:var(--ink); font-size:12px; font-weight:600; }
+.pageInput span,.zoomControls > span { color:#7c8077; font-size:11px; }
+.canvas { height:min(76vh,780px); min-height:520px; padding:18px; background:#e9ebe5; }
+.frame { display:block; width:100%; height:100%; border:0; border-radius:9px; background:#dfe2db; box-shadow:0 10px 35px rgba(0,0,0,.12); }
+.footerBar { min-height:40px; padding:0 18px; display:flex; align-items:center; justify-content:space-between; color:#8a8e85; font-size:10px; }
+.footerBar span { display:flex; align-items:center; gap:6px; }
+@media(max-width:700px) {
+  .viewerPage { width:calc(100% - 18px); margin-top:12px; }
+  .workspace { border-radius:16px; }
+  .header { padding-left:12px; }
+  .fileInfo strong { max-width:190px; }
+  .headerActions .ghost-button { padding:8px; font-size:0; }
+  .toolbar { justify-content:flex-start; }
+  .zoomControls { position:static; margin-left:auto; }
+  .canvas { min-height:430px; height:68vh; padding:8px; }
+  .footerBar { padding:0 10px; }
+  .footerBar span:last-child { display:none; }
+}
