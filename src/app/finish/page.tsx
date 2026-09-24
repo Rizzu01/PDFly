@@ -9,31 +9,65 @@ export default function FinishSignInPage() {
 
   useEffect(() => {
     let active = true;
+    let redirected = false;
+
+    const goToDashboard = () => {
+      if (!active || redirected) return;
+      redirected = true;
+      router.replace('/dashboard');
+    };
 
     const finish = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!active) return;
+      // Google may return an implicit-flow session in the URL hash.
+      // Handle that explicitly before falling back to the normal session/code flow.
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const accessToken = hash.get('access_token');
+      const refreshToken = hash.get('refresh_token');
 
-      if (data.session) {
-        router.replace('/dashboard');
-        return;
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!error) {
+          window.history.replaceState({}, document.title, '/finish');
+          goToDashboard();
+          return;
+        }
       }
 
       const code = new URLSearchParams(window.location.search).get('code');
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (!error) {
-          router.replace('/dashboard');
+          goToDashboard();
           return;
         }
       }
 
-      router.replace('/login?error=auth_callback');
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        goToDashboard();
+        return;
+      }
+
+      // Give Supabase's browser auth listener a moment to finish processing
+      // the OAuth callback before treating the flow as failed.
+      window.setTimeout(async () => {
+        if (!active || redirected) return;
+        const { data: retry } = await supabase.auth.getSession();
+        if (retry.session) {
+          goToDashboard();
+        } else {
+          router.replace('/login?error=auth_callback');
+        }
+      }, 1200);
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-        router.replace('/dashboard');
+        goToDashboard();
       }
     });
 
