@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -21,14 +21,15 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const tools = [
-  { icon: Merge, title: "Merge PDF", text: "Combine files in seconds." },
-  { icon: Split, title: "Split PDF", text: "Separate pages your way." },
-  { icon: FileDown, title: "Compress PDF", text: "Shrink size, keep quality." },
-  { icon: FileText, title: "PDF Editor", text: "Edit, annotate and fill." },
-  { icon: ScanText, title: "OCR", text: "Make scanned files searchable." },
-  { icon: MessageSquareText, title: "Ask your PDF", text: "Understand documents with AI." },
+  { href: "/", icon: Merge, title: "Merge PDF", text: "Combine files in seconds." },
+  { href: "/split", icon: Split, title: "Split PDF", text: "Separate pages your way." },
+  { href: "/compress", icon: FileDown, title: "Compress PDF", text: "Shrink size, keep quality." },
+  { href: "/editor", icon: FileText, title: "PDF Editor", text: "Edit, annotate and fill." },
+  { href: "/ocr", icon: ScanText, title: "OCR", text: "Make scanned files searchable." },
+  { href: "/dashboard", icon: MessageSquareText, title: "Ask your PDF", text: "Open your PDF workspace." },
 ];
 
 export default function Home() {
@@ -37,6 +38,27 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (active) setLoggedIn(Boolean(data.session));
+    };
+
+    void loadSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   const addFiles = useCallback((incoming: FileList | File[]) => {
     const pdfs = Array.from(incoming).filter((file) => file.type === "application/pdf");
@@ -94,8 +116,14 @@ export default function Home() {
         <a className="brand" href="#top" aria-label="PDFly home"><span className="brand-mark"><span /></span><span>PDFly</span></a>
         <div className="nav-links"><a href="#tools">Tools</a><a href="#ai">AI Workspace</a><a href="#security">Security</a><a href="#pricing">Pricing</a></div>
         <div className="nav-actions">
-          <Link className="ghost-button" href="/login">Sign in</Link>
-          <Link className="dark-button" href="/signup">Get started <ArrowRight size={16} /></Link>
+          {loggedIn ? (
+            <Link className="dark-button" href="/dashboard">Dashboard <ArrowRight size={16} /></Link>
+          ) : (
+            <>
+              <Link className="ghost-button" href="/login">Sign in</Link>
+              <Link className="dark-button" href="/signup">Get started <ArrowRight size={16} /></Link>
+            </>
+          )}
           <button className="icon-button mobile-menu" aria-label="Open menu"><Menu size={20} /></button>
         </div>
       </nav>
@@ -121,7 +149,15 @@ export default function Home() {
 
       <section className="section container" id="tools">
         <div className="section-heading"><div><span className="kicker">PDF tools</span><h2>Everything you need.<br />Nothing you don&apos;t.</h2></div><a href="#tools">View all tools <ArrowRight size={16} /></a></div>
-        <div className="tool-grid">{tools.map(({ icon: Icon, title, text }) => <button className="tool-card" key={title} onClick={() => title === "Merge PDF" && window.scrollTo({ top: 0, behavior: "smooth" })}><span className="tool-icon"><Icon size={20} /></span><span><strong>{title}</strong><small>{text}</small></span><ArrowRight className="tool-arrow" size={17} /></button>)}</div>
+        <div className="tool-grid">
+          {tools.map(({ href, icon: Icon, title, text }) => (
+            <Link className="tool-card" href={href} key={title}>
+              <span className="tool-icon"><Icon size={20} /></span>
+              <span><strong>{title}</strong><small>{text}</small></span>
+              <ArrowRight className="tool-arrow" size={17} />
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="ai-section" id="ai"><div className="container ai-layout"><div className="ai-copy"><span className="kicker light">PDFly AI</span><h2>Your documents,<br /><em>finally understandable.</em></h2><p>Ask questions, extract key details, summarize long files and turn messy documents into useful answers — without digging through every page.</p><div className="ai-points"><span><Check size={15} /> Summarize long documents</span><span><Check size={15} /> Extract tables and key facts</span><span><Check size={15} /> Ask questions in plain English</span></div><Link className="light-button" href="/dashboard">Explore AI Workspace <ArrowRight size={16} /></Link></div><div className="ai-card"><div className="ai-window-top"><span>Document Copilot</span><span className="live-dot">● Live</span></div><div className="chat-message user-msg">What are the three most important points in this contract?</div><div className="chat-message ai-msg"><span className="ai-avatar"><Sparkles size={13} /></span><div><strong>Here&apos;s the short version:</strong><ol><li>The agreement renews automatically after 12 months.</li><li>Either party can terminate with 30 days&apos; notice.</li><li>Confidentiality obligations survive termination.</li></ol></div></div><div className="chat-input">Ask anything about this document… <ArrowRight size={15} /></div></div></div></section>
