@@ -60,6 +60,8 @@ export default function Home() {
     finally { setProcessing(false); }
   };
 
+  const marqueeTools = [...tools, ...tools, ...tools];
+
   return (
     <main className="site-shell">
       <nav className="nav container">
@@ -78,30 +80,20 @@ export default function Home() {
         <div className="tools-marquee" aria-label="PDFly tools">
           <div className="marquee-fade marquee-fade-left" aria-hidden="true" />
           <div className="marquee-fade marquee-fade-right" aria-hidden="true" />
-
           <div className="tools-marquee-row row-one">
-            {[0, 1, 2].map((group) => (
-              <div className="marquee-group" key={`top-group-${group}`}>
-                {tools.map(({ href, icon: Icon, title, text }) => (
-                  <Link href={href} className="marquee-card" key={`top-${group}-${title}`}>
-                    <span className="marquee-icon"><Icon size={18} /></span>
-                    <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
-                  </Link>
-                ))}
-              </div>
+            {marqueeTools.map(({ href, icon: Icon, title }, index) => (
+              <Link href={href} className="marquee-card" key={`one-${title}-${index}`}>
+                <span className="marquee-icon"><Icon size={18} /></span>
+                <strong>{title}</strong>
+              </Link>
             ))}
           </div>
-
           <div className="tools-marquee-row row-two">
-            {[0, 1, 2].map((group) => (
-              <div className="marquee-group" key={`bottom-group-${group}`}>
-                {[...tools].reverse().map(({ href, icon: Icon, title, text }) => (
-                  <Link href={href} className="marquee-card" key={`bottom-${group}-${title}`}>
-                    <span className="marquee-icon"><Icon size={18} /></span>
-                    <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
-                  </Link>
-                ))}
-              </div>
+            {[...marqueeTools].reverse().map(({ href, icon: Icon, title }, index) => (
+              <Link href={href} className="marquee-card" key={`two-${title}-${index}`}>
+                <span className="marquee-icon"><Icon size={18} /></span>
+                <strong>{title}</strong>
+              </Link>
             ))}
           </div>
         </div>
@@ -127,24 +119,24 @@ export default function Home() {
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
       <style jsx>{`
-        .tools-marquee{--card-width:280px;--card-gap:24px;--group-width:2408px;--marquee-shift:2432px;width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:32px 0 36px;padding:8px 0;background:#fff}
-        .tools-marquee-row{display:flex;width:max-content;align-items:center;gap:24px;padding:0 56px;margin:0;box-sizing:border-box;will-change:transform}
-        .tools-marquee-row + .tools-marquee-row{margin-top:24px}
-        .marquee-group{display:flex;gap:24px;flex:0 0 var(--group-width);width:var(--group-width)}
-        .row-one{animation:pdfly-tools-left 48s linear infinite}
-        .row-two{animation:pdfly-tools-right 52s linear infinite}
-        .marquee-card{width:var(--card-width);height:90px;box-sizing:border-box;display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:18px;align-items:center;padding:18px 20px;border:1px solid #d9ddd4;border-radius:16px;background:#fff;box-shadow:0 6px 20px rgba(17,18,15,.07);flex:0 0 var(--card-width);text-align:left;text-decoration:none}
-        .marquee-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:13px;background:#d8ff5f;color:#20221d;flex:0 0 48px}
-        .marquee-content{min-width:0;display:flex;flex-direction:column;gap:5px;justify-content:center}
-        .marquee-card strong{display:block;font-size:13px;line-height:18px;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-card small{display:block;font-size:10.5px;line-height:15px;color:#777b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-fade{position:absolute;top:0;bottom:0;width:210px;z-index:5;pointer-events:none}
-        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,#fff 18%,rgba(255,255,255,.9) 42%,rgba(255,255,255,0) 100%)}
-        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,#fff 18%,rgba(255,255,255,.9) 42%,rgba(255,255,255,0) 100%)}
-        @keyframes pdfly-tools-left{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-1 * var(--marquee-shift)),0,0)}}
-        @keyframes pdfly-tools-right{from{transform:translate3d(calc(-1 * var(--marquee-shift)),0,0)}to{transform:translate3d(0,0,0)}}
-        @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.marquee-fade{display:none}}
-        @media(max-width:850px){.tools-marquee{--card-width:240px;--card-gap:16px;--group-width:2024px;--marquee-shift:2040px;margin:24px 0 30px;padding:6px 0}.tools-marquee-row{gap:16px;padding:0 28px}.tools-marquee-row + .tools-marquee-row{margin-top:18px}.marquee-group{gap:16px;flex-basis:var(--group-width);width:var(--group-width)}.row-one{animation-duration:42s}.row-two{animation-duration:46s}.marquee-card{height:82px;grid-template-columns:42px minmax(0,1fr);column-gap:14px;padding:14px 16px}.marquee-icon{width:42px;height:42px;flex-basis:42px}.marquee-card strong{font-size:12px}.marquee-card small{font-size:9.5px}.marquee-fade{width:110px}}
+        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:32px 0 36px;padding:10px 0 14px;background:#fff}
+        .tools-marquee-row{display:flex;width:max-content;align-items:center;gap:20px;padding:0 48px;margin:0;box-sizing:border-box}
+        .tools-marquee-row + .tools-marquee-row{margin-top:30px}
+        .row-one{animation:pdfly-tools-left 44s linear infinite}
+        .row-two{animation:pdfly-tools-right 48s linear infinite}
+        .marquee-card{width:270px;height:72px;box-sizing:border-box;display:grid;grid-template-columns:46px minmax(0,1fr);column-gap:16px;align-items:center;padding:13px 18px;border:1px solid #e3e6de;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(17,18,15,.07);flex:0 0 270px;text-align:left;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+        .marquee-card:hover{border-color:#cbd0c2;box-shadow:0 10px 24px rgba(17,18,15,.1);transform:translateY(-2px)}
+        .marquee-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#d8ff5f,#d6f0a4);color:#20221d;flex:0 0 46px}
+        .marquee-card:nth-child(3n) .marquee-icon{background:linear-gradient(135deg,#e2c9ff,#ffb7df)}
+        .marquee-card:nth-child(4n) .marquee-icon{background:linear-gradient(135deg,#a9e9ff,#c8ffb8)}
+        .marquee-card strong{display:block;font-size:13px;line-height:1.2;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .marquee-fade{position:absolute;top:0;bottom:0;width:190px;z-index:5;pointer-events:none}
+        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.99) 24%,rgba(255,255,255,.72) 52%,rgba(255,255,255,0) 100%)}
+        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.99) 24%,rgba(255,255,255,.72) 52%,rgba(255,255,255,0) 100%)}
+        @keyframes pdfly-tools-left{from{transform:translate3d(0,0,0)}to{transform:translate3d(-33.333333%,0,0)}}
+        @keyframes pdfly-tools-right{from{transform:translate3d(-33.333333%,0,0)}to{transform:translate3d(0,0,0)}}
+        @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.marquee-fade{display:none}.tools-marquee{overflow-x:auto}.marquee-card{scroll-snap-align:start}}
+        @media(max-width:850px){.tools-marquee{margin:24px 0 30px;padding:8px 0 12px}.tools-marquee-row{gap:14px;padding:0 24px}.tools-marquee-row + .tools-marquee-row{margin-top:22px}.row-one{animation-duration:38s}.row-two{animation-duration:42s}.marquee-card{width:230px;height:64px;flex-basis:230px;grid-template-columns:40px minmax(0,1fr);column-gap:13px;padding:12px 14px}.marquee-icon{width:40px;height:40px;flex-basis:40px;border-radius:11px}.marquee-card strong{font-size:12px}.marquee-fade{width:95px}}
       `}</style>
     </main>
   );
