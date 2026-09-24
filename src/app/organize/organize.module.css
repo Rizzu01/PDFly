@@ -1,0 +1,23 @@
+.workspace { max-width: 1040px; margin: 16px auto 0; padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: #fbfcf9; text-align: left; box-shadow: 0 20px 55px rgba(21,23,18,.06); }
+.header { display:flex; align-items:center; justify-content:space-between; padding:5px 4px 15px; border-bottom:1px solid var(--line); }
+.header div { min-width:0; display:flex; align-items:baseline; gap:9px; }
+.header strong { max-width:650px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+.header span { color:#898d84; font-size:11px; white-space:nowrap; }
+.toolbar { display:flex; align-items:center; justify-content:space-between; padding:13px 4px 15px; color:#70746b; font-size:12px; }
+.toolbar > div { display:flex; gap:4px; align-items:center; }
+.toolbar .ghost-button { padding:7px 9px; font-size:12px; }
+.danger { color:#9a4b4b; }
+.grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.card { min-width:0; border:1px solid var(--line); border-radius:14px; background:#fff; padding:9px; transition:.18s ease; }
+.card:hover { border-color:#c3c7bd; transform:translateY(-2px); }
+.selected { border-color:#a9c94d; box-shadow:0 0 0 2px rgba(216,255,95,.55); }
+.preview { position:relative; width:100%; height:155px; border:0; border-radius:9px; background:linear-gradient(145deg,#f1f3ed,#fafbf8); color:#9a9e95; cursor:pointer; display:grid; place-items:center; }
+.number { position:absolute; top:10px; left:11px; font-size:10px; font-weight:700; color:#777b73; }
+.check { position:absolute; top:9px; right:9px; width:23px; height:23px; display:grid; place-items:center; border-radius:50%; background:var(--lime); color:#111; }
+.cardFooter { display:flex; align-items:center; justify-content:space-between; padding:9px 3px 1px; color:#6e7269; font-size:11px; }
+.cardFooter div { display:flex; gap:2px; }
+.cardFooter button { border:0; background:transparent; color:#72766e; cursor:pointer; width:25px; height:25px; border-radius:7px; }
+.cardFooter button:hover { background:var(--soft); }
+.cardFooter button:disabled { opacity:.25; cursor:not-allowed; }
+@media (max-width:850px) { .grid { grid-template-columns:repeat(3,1fr); } }
+@media (max-width:560px) { .workspace { padding:10px; border-radius:17px; } .toolbar { align-items:flex-start; flex-direction:column; gap:8px; } .toolbar > div { flex-wrap:wrap; } .grid { grid-template-columns:repeat(2,1fr); gap:8px; } .preview { height:130px; } .header strong { max-width:180px; } .header span { display:none; } }
