@@ -60,6 +60,8 @@ export default function Home() {
     finally { setProcessing(false); }
   };
 
+  const marqueeTools = [...tools, ...tools, ...tools];
+
   return (
     <main className="site-shell">
       <nav className="nav container">
@@ -74,6 +76,26 @@ export default function Home() {
       <section className="hero container" id="top">
         <div className="eyebrow"><Sparkles size={15} /> The smarter way to work with documents</div>
         <h1>PDF work,<br /><span>without the busywork.</span></h1>
+
+        <div className="tools-marquee" aria-label="PDFly tools">
+          <div className="tools-marquee-row row-one">
+            {marqueeTools.map(({ href, icon: Icon, title, text }, index) => (
+              <Link href={href} className="marquee-card" key={`one-${title}-${index}`}>
+                <span className="marquee-icon"><Icon size={17} /></span>
+                <span><strong>{title}</strong><small>{text}</small></span>
+              </Link>
+            ))}
+          </div>
+          <div className="tools-marquee-row row-two">
+            {[...marqueeTools].reverse().map(({ href, icon: Icon, title, text }, index) => (
+              <Link href={href} className="marquee-card" key={`two-${title}-${index}`}>
+                <span className="marquee-icon"><Icon size={17} /></span>
+                <span><strong>{title}</strong><small>{text}</small></span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <p className="hero-copy">Merge, split, compress, edit, convert and understand your documents from one simple workspace.</p>
         <div className={`dropzone ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); addFiles(event.dataTransfer.files); }} onClick={() => inputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}>
           <input ref={inputRef} type="file" accept="application/pdf" multiple hidden onChange={(event) => event.target.files && addFiles(event.target.files)} />
@@ -85,12 +107,6 @@ export default function Home() {
         <div className="trust-row"><span><Lock size={14} /> Files stay private</span><span><Zap size={14} /> Fast processing</span><span><ShieldCheck size={14} /> Secure by design</span></div>
       </section>
 
-      <section className="tools-marquee" aria-label="PDFly tools">
-        <div className="tools-marquee-track">
-          {[...tools, ...tools].map(({ href, icon: Icon, title }, index) => <Link href={href} className="marquee-tool" key={`${title}-${index}`}><Icon size={17} /><span>{title}</span></Link>)}
-        </div>
-      </section>
-
       <section className="section container" id="tools">
         <div className="section-heading"><div><span className="kicker">PDF tools</span><h2>Everything you need.<br />Nothing you don&apos;t.</h2></div><Link href="/tools">All tools <ArrowRight size={16} /></Link></div>
         <div className="tool-grid">{tools.map(({ href, icon: Icon, title, text }) => <Link className="tool-card" href={href} key={title}><span className="tool-icon"><Icon size={20} /></span><span><strong>{title}</strong><small>{text}</small></span><ArrowRight className="tool-arrow" size={17} /></Link>)}</div>
@@ -100,7 +116,25 @@ export default function Home() {
       <section className="security-section container" id="security"><div className="security-card"><div className="security-icon"><ShieldCheck size={24} /></div><div><span className="kicker">Privacy first</span><h2>Your files are yours.</h2><p>PDFly is designed around temporary processing. We don&apos;t need to keep your documents just to help you work with them.</p></div><div className="security-stat"><strong>0</strong><span>default permanent<br />PDF storage</span></div></div></section>
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
-      <style jsx>{`.tools-marquee{overflow:hidden;border-top:1px solid #e8e9e4;border-bottom:1px solid #e8e9e4;background:#fff;padding:12px 0;margin:12px 0 0}.tools-marquee-track{display:flex;width:max-content;animation:pdfly-marquee 28s linear infinite}.marquee-tool{display:inline-flex;align-items:center;gap:9px;padding:10px 22px;margin-right:10px;border:1px solid #e8e9e4;border-radius:999px;color:#33352f;text-decoration:none;background:#fafbf8;font-size:13px;font-weight:700;white-space:nowrap}.marquee-tool:hover{background:#d8ff5f;border-color:#d8ff5f}@keyframes pdfly-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}@media(prefers-reduced-motion:reduce){.tools-marquee-track{animation:none}}`}</style>
+      <style jsx>{`
+        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:28px 0 30px;padding:4px 0;background:transparent}
+        .tools-marquee-row{display:flex;width:max-content;gap:12px;margin:8px 0}
+        .row-one{animation:pdfly-tools-left 34s linear infinite}
+        .row-two{animation:pdfly-tools-right 38s linear infinite}
+        .marquee-card{width:225px;min-height:76px;display:flex;align-items:center;gap:13px;padding:13px 15px;border:1px solid #e5e7e1;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 4px 14px rgba(17,18,15,.035);flex:0 0 auto;text-align:left;transition:.2s ease}
+        .marquee-card:hover{border-color:#cfd3c7;box-shadow:0 10px 24px rgba(17,18,15,.07);transform:translateY(-2px)}
+        .marquee-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#d8ff5f,#c5dfff);color:#20221d}
+        .marquee-card:nth-child(3n) .marquee-icon{background:linear-gradient(135deg,#d6b5ff,#ff9bd3)}
+        .marquee-card:nth-child(4n) .marquee-icon{background:linear-gradient(135deg,#9ee8ff,#b7ffb0)}
+        .marquee-card span:last-child{min-width:0}
+        .marquee-card strong,.marquee-card small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .marquee-card strong{font-size:13px;margin-bottom:4px}
+        .marquee-card small{font-size:10px;color:#7b7e77}
+        @keyframes pdfly-tools-left{from{transform:translateX(0)}to{transform:translateX(-33.3333%)}}
+        @keyframes pdfly-tools-right{from{transform:translateX(-33.3333%)}to{transform:translateX(0)}}
+        @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.tools-marquee{overflow-x:auto}.marquee-card{scroll-snap-align:start}}
+        @media(max-width:850px){.tools-marquee{margin:22px 0 25px}.marquee-card{width:190px;min-height:68px;padding:10px 12px}.marquee-icon{width:34px;height:34px;flex-basis:34px}.marquee-card small{font-size:9px}}
+      `}</style>
     </main>
   );
 }
