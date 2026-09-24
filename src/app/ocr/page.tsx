@@ -17,7 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { createWorker } from "tesseract.js";
-import { createOcrPdf, downloadBlob } from "@/src/lib/processing-api";
+import { createOcrPdf, downloadBlob } from "@/lib/processing-api";
 import "./ocr.module.css";
 
 async function renderPdfPages(file: File) {
