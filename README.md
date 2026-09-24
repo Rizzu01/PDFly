@@ -15,6 +15,8 @@ PDFly is a next-generation document workspace focused on fast, private and simpl
 - Next.js + React + TypeScript
 - Custom CSS design system
 - pdf-lib for client-side PDF operations
+- PDF.js for browser PDF rendering
+- Tesseract.js for browser OCR
 - FastAPI/Python worker layer (planned)
 - Supabase for auth and product data (planned)
 
@@ -26,10 +28,16 @@ PDFly is a next-generation document workspace focused on fast, private and simpl
 4. Compress PDF
 5. Reorder / delete pages
 6. PDF viewer/editor foundation
-7. Temporary processing API
-8. Authentication and usage limits
-9. OCR and conversion tools
-10. AI Document Copilot
+7. Conversion tools
+8. Browser OCR extraction
+9. Temporary processing API
+10. Authentication and usage limits
+11. Searchable-PDF reconstruction
+12. AI Document Copilot
+
+## OCR
+
+The current OCR workspace supports scanned images and PDFs in the browser, with English and Hindi recognition, page-by-page PDF rendering, editable extracted text, copy, and `.txt` export. It uses PDF.js for rendering and Tesseract.js for recognition. Searchable-PDF reconstruction is intentionally reserved for the heavier processing engine.
 
 ## Privacy model
 
