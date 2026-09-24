@@ -1,9 +1,16 @@
+import { consumeProcessingJob } from "./usage";
+
 const PROCESSING_API_URL = process.env.NEXT_PUBLIC_PROCESSING_API_URL || "http://localhost:8000";
 
 export type OcrLanguage = "eng" | "hin" | "hin+eng";
 export type CompressionLevel = "light" | "balanced" | "strong";
 
 async function processFile(path: string, file: File, params?: Record<string, string>) {
+  const usage = await consumeProcessingJob();
+  if (!usage.allowed) {
+    throw new Error("Daily processing limit reached (5 jobs/day). Try again tomorrow or upgrade your plan.");
+  }
+
   const query = params ? `?${new URLSearchParams(params).toString()}` : "";
   const formData = new FormData();
   formData.append("file", file);
