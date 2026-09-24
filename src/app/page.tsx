@@ -119,25 +119,25 @@ export default function Home() {
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
       <style jsx>{`
-        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:30px 0 34px;padding:4px 0 7px;background:#fff}
-        .tools-marquee-row{display:flex;width:max-content;gap:16px;margin:9px 0}
+        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:30px 0 34px;padding:8px 0 12px;background:#fff}
+        .tools-marquee-row{display:flex;width:max-content;gap:18px;margin:0;padding:0 28px}
         .row-one{animation:pdfly-tools-left 36s linear infinite}
-        .row-two{animation:pdfly-tools-right 40s linear infinite}
-        .marquee-card{width:250px;min-height:82px;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:15px;align-items:center;padding:14px 17px;border:1px solid #e4e6df;border-radius:16px;background:#fff;box-shadow:0 5px 18px rgba(17,18,15,.045);flex:0 0 auto;text-align:left;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+        .row-two{animation:pdfly-tools-right 40s linear infinite;margin-top:18px}
+        .marquee-card{width:250px;height:84px;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:15px;align-items:center;padding:16px 18px;border:1px solid #e4e6df;border-radius:16px;background:#fff;box-shadow:0 5px 18px rgba(17,18,15,.045);flex:0 0 auto;text-align:left;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
         .marquee-card:hover{border-color:#cbd0c2;box-shadow:0 12px 28px rgba(17,18,15,.08);transform:translateY(-2px)}
         .marquee-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#d8ff5f,#d6f0a4);color:#20221d}
         .marquee-card:nth-child(3n) .marquee-icon{background:linear-gradient(135deg,#e2c9ff,#ffb7df)}
         .marquee-card:nth-child(4n) .marquee-icon{background:linear-gradient(135deg,#a9e9ff,#c8ffb8)}
-        .marquee-content{min-width:0;display:grid;grid-template-rows:auto auto;row-gap:5px;align-content:center}
-        .marquee-card strong{display:block;font-size:13px;line-height:1.15;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .marquee-content{min-width:0;display:grid;grid-template-rows:auto auto;row-gap:6px;align-content:center}
+        .marquee-card strong{display:block;font-size:13px;line-height:1.2;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .marquee-card small{display:block;font-size:10.5px;line-height:1.35;color:#777b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-fade{position:absolute;top:0;bottom:0;width:170px;z-index:5;pointer-events:none}
-        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.98) 25%,rgba(255,255,255,.72) 48%,rgba(255,255,255,0) 100%)}
-        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.98) 25%,rgba(255,255,255,.72) 48%,rgba(255,255,255,0) 100%)}
+        .marquee-fade{position:absolute;top:0;bottom:0;width:180px;z-index:5;pointer-events:none}
+        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.99) 25%,rgba(255,255,255,.72) 50%,rgba(255,255,255,0) 100%)}
+        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.99) 25%,rgba(255,255,255,.72) 50%,rgba(255,255,255,0) 100%)}
         @keyframes pdfly-tools-left{from{transform:translateX(0)}to{transform:translateX(-33.333333%)}}
         @keyframes pdfly-tools-right{from{transform:translateX(-33.333333%)}to{transform:translateX(0)}}
         @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.marquee-fade{display:none}.tools-marquee{overflow-x:auto}.marquee-card{scroll-snap-align:start}}
-        @media(max-width:850px){.tools-marquee{margin:24px 0 28px}.tools-marquee-row{gap:12px}.marquee-card{width:220px;min-height:76px;grid-template-columns:38px minmax(0,1fr);column-gap:12px;padding:12px 14px}.marquee-icon{width:38px;height:38px;border-radius:11px}.marquee-card small{font-size:9.5px}.marquee-fade{width:85px}}
+        @media(max-width:850px){.tools-marquee{margin:24px 0 28px;padding:6px 0 10px}.tools-marquee-row{gap:12px;padding:0 18px}.row-two{margin-top:14px}.marquee-card{width:220px;height:78px;grid-template-columns:38px minmax(0,1fr);column-gap:12px;padding:13px 14px}.marquee-icon{width:38px;height:38px;border-radius:11px}.marquee-card small{font-size:9.5px}.marquee-fade{width:85px}}
       `}</style>
     </main>
   );
