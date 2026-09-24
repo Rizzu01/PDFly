@@ -60,8 +60,6 @@ export default function Home() {
     finally { setProcessing(false); }
   };
 
-  const marqueeTools = [...tools, ...tools, ...tools];
-
   return (
     <main className="site-shell">
       <nav className="nav container">
@@ -75,30 +73,8 @@ export default function Home() {
 
       <section className="hero container" id="top">
         <div className="eyebrow"><Sparkles size={15} /> The smarter way to work with documents</div>
-        <h1>PDF work,<br /><span>without the busywork.</span></h1>
+        <h1 className="hero-title-compact">PDF work, <span>without the busywork.</span></h1>
 
-        <div className="tools-marquee" aria-label="PDFly tools">
-          <div className="marquee-fade marquee-fade-left" aria-hidden="true" />
-          <div className="marquee-fade marquee-fade-right" aria-hidden="true" />
-          <div className="tools-marquee-row row-one">
-            {marqueeTools.map(({ href, icon: Icon, title, text }, index) => (
-              <Link href={href} className="marquee-card" key={`one-${title}-${index}`}>
-                <span className="marquee-icon"><Icon size={18} /></span>
-                <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
-              </Link>
-            ))}
-          </div>
-          <div className="tools-marquee-row row-two">
-            {[...marqueeTools].reverse().map(({ href, icon: Icon, title, text }, index) => (
-              <Link href={href} className="marquee-card" key={`two-${title}-${index}`}>
-                <span className="marquee-icon"><Icon size={18} /></span>
-                <span className="marquee-content"><strong>{title}</strong><small>{text}</small></span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <p className="hero-copy">Merge, split, compress, edit, convert and understand your documents from one simple workspace.</p>
         <div className={`dropzone ${dragging ? "is-dragging" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={(event) => { event.preventDefault(); setDragging(false); addFiles(event.dataTransfer.files); }} onClick={() => inputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}>
           <input ref={inputRef} type="file" accept="application/pdf" multiple hidden onChange={(event) => event.target.files && addFiles(event.target.files)} />
           <div className="upload-icon"><Upload size={22} /></div><h2>{files.length ? `${files.length} PDF${files.length > 1 ? "s" : ""} ready` : "Drop your PDF here"}</h2><p>{files.length ? "Click to add more files or choose a tool below." : "or click to browse from your device"}</p><span className="file-note">PDF files · Private by default · No permanent storage</span>
@@ -119,26 +95,9 @@ export default function Home() {
       <section className="footer-cta container" id="pricing"><span className="kicker">Ready when you are</span><h2>Make PDFs feel<br /><span>effortless.</span></h2><Link className="dark-button large" href="/signup">Start working with PDFly <ArrowRight size={17} /></Link></section>
       <footer className="footer container"><div className="brand"><span className="brand-mark"><span /></span><span>PDFly</span></div><span>Built for better document workflows.</span><span>Privacy-first PDF tools.</span></footer>
       <style jsx>{`
-        .tools-marquee{width:100vw;position:relative;left:50%;transform:translateX(-50%);overflow:hidden;margin:32px 0 36px;padding:10px 0 14px;background:#fff}
-        .tools-marquee-row{display:flex;width:max-content;align-items:center;gap:20px;padding:0 48px;margin:0;box-sizing:border-box}
-        .tools-marquee-row + .tools-marquee-row{margin-top:30px}
-        .row-one{animation:pdfly-tools-left 44s linear infinite}
-        .row-two{animation:pdfly-tools-right 48s linear infinite}
-        .marquee-card{width:270px;height:88px;box-sizing:border-box;display:grid;grid-template-columns:46px minmax(0,1fr);column-gap:16px;align-items:center;padding:14px 18px;border:1px solid #e3e6de;border-radius:16px;background:#fff;box-shadow:0 6px 18px rgba(17,18,15,.07);flex:0 0 270px;text-align:left;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
-        .marquee-card:hover{border-color:#cbd0c2;box-shadow:0 10px 24px rgba(17,18,15,.1);transform:translateY(-2px)}
-        .marquee-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#d8ff5f,#d6f0a4);color:#20221d;flex:0 0 46px}
-        .marquee-card:nth-child(3n) .marquee-icon{background:linear-gradient(135deg,#e2c9ff,#ffb7df)}
-        .marquee-card:nth-child(4n) .marquee-icon{background:linear-gradient(135deg,#a9e9ff,#c8ffb8)}
-        .marquee-content{min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px}
-        .marquee-card strong{display:block;font-size:13px;line-height:1.2;font-weight:700;color:#20221d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-card small{display:block;font-size:10.5px;line-height:1.3;font-weight:500;color:#777b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .marquee-fade{position:absolute;top:0;bottom:0;width:190px;z-index:5;pointer-events:none}
-        .marquee-fade-left{left:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.99) 24%,rgba(255,255,255,.72) 52%,rgba(255,255,255,0) 100%)}
-        .marquee-fade-right{right:0;background:linear-gradient(270deg,#fff 0%,rgba(255,255,255,.99) 24%,rgba(255,255,255,.72) 52%,rgba(255,255,255,0) 100%)}
-        @keyframes pdfly-tools-left{from{transform:translate3d(0,0,0)}to{transform:translate3d(-33.333333%,0,0)}}
-        @keyframes pdfly-tools-right{from{transform:translate3d(-33.333333%,0,0)}to{transform:translate3d(0,0,0)}}
-        @media(prefers-reduced-motion:reduce){.tools-marquee-row{animation:none}.marquee-fade{display:none}.tools-marquee{overflow-x:auto}.marquee-card{scroll-snap-align:start}}
-        @media(max-width:850px){.tools-marquee{margin:24px 0 30px;padding:8px 0 12px}.tools-marquee-row{gap:14px;padding:0 24px}.tools-marquee-row + .tools-marquee-row{margin-top:22px}.row-one{animation-duration:38s}.row-two{animation-duration:42s}.marquee-card{width:230px;height:80px;flex-basis:230px;grid-template-columns:40px minmax(0,1fr);column-gap:13px;padding:12px 14px}.marquee-icon{width:40px;height:40px;flex-basis:40px;border-radius:11px}.marquee-card strong{font-size:12px}.marquee-card small{font-size:9.5px}.marquee-fade{width:95px}}
+        .hero-title-compact{font-size:clamp(42px,5.2vw,68px);line-height:.98;letter-spacing:-.055em;margin:18px auto 30px;max-width:900px}
+        .hero-title-compact span{white-space:nowrap}
+        @media(max-width:700px){.hero-title-compact{font-size:42px;line-height:1.02;margin:16px auto 24px}.hero-title-compact span{white-space:normal}}
       `}</style>
     </main>
   );
