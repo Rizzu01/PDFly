@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { PDFDocument } from "pdf-lib";
 import {
   ArrowRight,
   Check,
@@ -35,16 +36,61 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   const addFiles = useCallback((incoming: FileList | File[]) => {
     const pdfs = Array.from(incoming).filter((file) => file.type === "application/pdf");
-    if (pdfs.length) setFiles((current) => [...current, ...pdfs]);
+    if (pdfs.length) {
+      setError("");
+      setFiles((current) => [...current, ...pdfs]);
+    } else {
+      setError("Please choose PDF files only.");
+    }
   }, []);
 
   const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragging(false);
     addFiles(event.dataTransfer.files);
+  };
+
+  const mergePdfs = async () => {
+    if (files.length < 2) {
+      setError("Add at least 2 PDF files to merge.");
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setError("");
+
+      // Everything happens in the browser. Files are never uploaded to PDFly.
+      const mergedPdf = await PDFDocument.create();
+
+      for (const file of files) {
+        const bytes = await file.arrayBuffer();
+        const sourcePdf = await PDFDocument.load(bytes);
+        const copiedPages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      const blob = new Blob([mergedBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "PDFly-merged.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      setError("We couldn't merge these files. Please check that the PDFs are valid and try again.");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -102,6 +148,14 @@ export default function Home() {
           </div>
         )}
 
+        {error && <p role="alert" className="error-message">{error}</p>}
+
+        {files.length >= 2 && (
+          <button className="dark-button large merge-action" onClick={(event) => { event.stopPropagation(); void mergePdfs(); }} disabled={processing}>
+            {processing ? "Merging PDFs…" : "Merge PDFs"} <ArrowRight size={17} />
+          </button>
+        )}
+
         <div className="trust-row">
           <span><Lock size={14} /> Files stay private</span>
           <span><Zap size={14} /> Fast processing</span>
@@ -116,7 +170,7 @@ export default function Home() {
         </div>
         <div className="tool-grid">
           {tools.map(({ icon: Icon, title, text }) => (
-            <button className="tool-card" key={title}>
+            <button className="tool-card" key={title} onClick={() => title === "Merge PDF" && window.scrollTo({ top: 0, behavior: "smooth" })}>
               <span className="tool-icon"><Icon size={20} /></span>
               <span><strong>{title}</strong><small>{text}</small></span>
               <ArrowRight className="tool-arrow" size={17} />
